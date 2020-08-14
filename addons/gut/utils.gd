@@ -88,6 +88,7 @@ var Summary = load('res://addons/gut/summary.gd')
 var Test = load('res://addons/gut/test.gd')
 var TestCollector = load('res://addons/gut/test_collector.gd')
 var ThingCounter = load('res://addons/gut/thing_counter.gd')
+var injector : TestCoverageMetricsInjector = load('res://addons/gut/coverage_injector.gd').new()
 
 # Source of truth for the GUT version
 var version = '7.0.0'

@@ -50,6 +50,8 @@ export(String) var _tests_like = ''
 # The full/partial name of an Inner Class to be run.  All Inner Classes that
 # contain the string will be run.
 export(String) var _inner_class_name = ''
+# Inject visited checkpoints in scripts
+export var _test_coverage = false
 # Start running tests when the scene finishes loading
 export var _run_on_load = false
 # Maximize the GUT control on startup
@@ -219,6 +221,11 @@ func _setup_gut():
 	_gut.get_gui().set_default_font_color(_font_color)
 	_gut.get_gui().set_background_color(_background_color)
 	_gut.get_gui().rect_size =  rect_size
+	
+	if(_test_coverage):
+		get_tree().connect("node_added", _utils.injector, "inject_test_metrics")
+		_gut.connect("tests_finished", self, "log_report")
+	
 	emit_signal('gut_ready')
 
 	if(_run_on_load):
@@ -226,6 +233,9 @@ func _setup_gut():
 		# otherwise all tests will be run.
 		var run_rest_of_scripts = _select_script == null
 		_gut.test_scripts(run_rest_of_scripts)
+
+func log_report():
+	_lgr.info(str(_gut._utils.injector.get_test_report()))
 
 func _is_ready_to_go(action):
 	if(_gut == null):
