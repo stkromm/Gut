@@ -9,8 +9,6 @@ func before_each():
 	
 
 func test_test():
-	var t = load("res://addons/gut/test.gd").new()
-	add_child(t)
 	dummy.conditional(true)
 
 func after_all():

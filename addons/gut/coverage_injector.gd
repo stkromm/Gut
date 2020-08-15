@@ -15,12 +15,12 @@ var res_key = ""
 var suite : Suite
 var exclude_path = "res://test"
 
+func _ready():
+	suite = Suite.new()
+	suite._ready()
+	add_child(suite)
 
 func get_test_report():
-	if suite == null:
-		suite = Suite.new()
-		suite._ready()
-		add_child(suite)
 	return suite.generate_report()
 
 func get_object_script(obj):
@@ -32,18 +32,18 @@ func get_object_script_path(obj):
 	if obj is Reference:
 		return obj.script.resource_path
 	return obj.get_script().resource_path
+	
+func not_injectable(obj):
+	var object_script = get_object_script(obj)
+	if object_script == null:
+		return true
+	var object_script_path = get_object_script_path(obj)
 
 func inject_test_metrics(obj):
-	if obj is Script:
-		return
 	var object_script = get_object_script(obj)
 	if object_script == null:
 		return
 	var object_script_path = get_object_script_path(obj)
-	if suite == null:
-		suite = Suite.new()
-		suite._ready()
-		add_child(suite)
 	if exclude_path in object_script_path:
 		return
 	if "res://" == object_script_path:
