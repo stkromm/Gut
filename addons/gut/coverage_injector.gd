@@ -22,6 +22,13 @@ func _ready():
 	suite = Suite.new()
 	suite._ready()
 	add_child(suite)
+	regex["func"] = _regex_factory("^func (?<symbol>.*)\\(.*:?(.*)$")
+	regex["skip"] = _regex_factory("^\\s$")
+	regex["pass"] = _regex_factory("^\\spass$")
+	regex["branch"] = _regex_factory("^(?<indentation>\t+)(if.*:|else:|elif:)\\s*(#.*)*$")
+	regex["match"] = _regex_factory("^(?<indentation>\t*)match[ ].*:.*$")
+	regex["match_condition"] = _regex_factory("^(?<indentation>\t+)(?!(match|if|elif|else)).*:.*$")
+	regex["indentation"] = _regex_factory("^(?<indentation>\t*)")
 
 func get_test_report():
 	return suite.generate_report()
@@ -35,7 +42,7 @@ func get_object_script_path(obj):
 	if obj is Reference:
 		return obj.script.resource_path
 	return obj.get_script().resource_path
-	
+
 func not_injectable(obj):
 	var object_script = get_object_script(obj)
 	if object_script == null:
@@ -51,23 +58,15 @@ func inject_test_metrics(obj):
 		return
 	if "res://" == object_script_path:
 		return
-	
-	regex["func"] = _regex_factory("^func (?<symbol>.*)\\(.*:?(.*)$")
-	regex["skip"] = _regex_factory("^\\s$")
-	regex["pass"] = _regex_factory("^\\spass$")
-	regex["branch"] = _regex_factory("^(?<indentation>\t+)(if.*:|else:|elif:)\\s*(#.*)*$")
-	regex["match"] = _regex_factory("^(?<indentation>\t*)match[ ].*:.*$")
-	regex["match_condition"] = _regex_factory("^(?<indentation>\t+)(?!(match|if|elif|else)).*:.*$")
-	regex["indentation"] = _regex_factory("^(?<indentation>\t*)")
-		
+
 	obj.add_user_signal("visited")
 	obj.connect("visited", suite, "on_visit")
-	
+
 	var script = fetch_script(obj)
-	
+
 	if len(blocks) == 0:
 		return
-	
+
 	obj.set_script(script)
 	return
 
@@ -109,8 +108,7 @@ func _process_line(line):
 	var result = regex["func"].search(line)
 	if result:
 		var name = result.get_string("symbol")
-		line = _new_block(name, line, "")
-	
+		line = _new_block(name, line, "\t")
 	if regex["skip"].search(line):
 		skipped_lines += 1
 		return ""
@@ -118,19 +116,20 @@ func _process_line(line):
 		_terminate_current_block()
 	result = regex["branch"].search(line)
 	if result and len(current_block) != 0:
-		line = _new_block(current_block["name"], line, result.get_string("indentation"))
-	
+		line = _new_block(current_block["name"], line, result.get_string("indentation") + "\t")
 	if match_block:
 		result = regex["match_condition"].search(line)
 		if result and len(current_block) != 0:
-			line = _new_block(current_block["name"], line, result.get_string("indentation"))
+			line = _new_block(current_block["name"], line, result.get_string("indentation") + "\t")
 	result = regex["indentation"].search(line)
 	if result.get_string("indentation") == match_indentation and match_block:
 		match_block = false
+		line = _new_block(current_block["name"], line, result.get_string("indentation"))
 	result = regex["match"].search(line)
 	if result and len(current_block) != 0:
 		match_block = true
 		match_indentation = result.get_string("indentation")
+	#TODO match block / if block levels
 
 	total_lines += 1
 	return line + "\n"
@@ -152,6 +151,6 @@ func _new_block(name, line, indentation):
 		methods[name] = false
 	current_block = {"visited": false, "start": line_nr, "name": name}
 	blocks[line_nr] = current_block
-	var content = indentation + "\temit_signal(\"visited\", \"" + name + "\", " + str(line_nr) + ",\"" + res_key + "\")"
+	var content = indentation + "emit_signal(\"visited\", \"" + name + "\", " + str(line_nr) + ",\"" + res_key + "\")"
 	return line + "\n" + content
 
