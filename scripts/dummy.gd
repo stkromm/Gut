@@ -15,3 +15,13 @@ func a_conditional(condition): #Something goes here
 		print("Hi")
 	#	if a == b:
 	print(condition)
+
+func match_conditional(condition):
+	match condition:
+		1:
+			print("First!")
+		2:
+			print("Second!")
+		_:
+			print("Defualt!")
+	print("End")

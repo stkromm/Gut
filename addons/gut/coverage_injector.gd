@@ -14,6 +14,9 @@ var total_lines = 0
 var res_key = ""
 var suite : Suite
 var exclude_path = "res://test"
+var match_block = false
+var match_indentation = ""
+
 
 func _ready():
 	suite = Suite.new()
@@ -52,8 +55,10 @@ func inject_test_metrics(obj):
 	regex["func"] = _regex_factory("^func (?<symbol>.*)\\(.*:?(.*)$")
 	regex["skip"] = _regex_factory("^\\s$")
 	regex["pass"] = _regex_factory("^\\spass$")
-	regex["branch"] = _regex_factory("^(?<indentation>\t*)((el)?if\\t+.*|else):?(\\t*#*)$")
-	
+	regex["branch"] = _regex_factory("^(?<indentation>\t+)(if.*:|else:|elif:)\\s*(#.*)*$")
+	regex["match"] = _regex_factory("^(?<indentation>\t*)match[ ].*:.*$")
+	regex["match_condition"] = _regex_factory("^(?<indentation>\t+)(?!(match|if|elif|else)).*:.*$")
+	regex["indentation"] = _regex_factory("^(?<indentation>\t*)")
 		
 	obj.add_user_signal("visited")
 	obj.connect("visited", suite, "on_visit")
@@ -90,6 +95,7 @@ func generate_script(obj):
 			line = ""
 	if "start" in current_block:
 		_terminate_current_block()
+	print(source)
 	script.set_source_code(source)
 	script.reload()
 	var t_data = ReportData.new()
@@ -104,7 +110,7 @@ func _process_line(line):
 	if result:
 		var name = result.get_string("symbol")
 		line = _new_block(name, line, "")
-		
+	
 	if regex["skip"].search(line):
 		skipped_lines += 1
 		return ""
@@ -113,6 +119,19 @@ func _process_line(line):
 	result = regex["branch"].search(line)
 	if result and len(current_block) != 0:
 		line = _new_block(current_block["name"], line, result.get_string("indentation"))
+	
+	if match_block:
+		result = regex["match_condition"].search(line)
+		if result and len(current_block) != 0:
+			line = _new_block(current_block["name"], line, result.get_string("indentation"))
+	result = regex["indentation"].search(line)
+	if result.get_string("indentation") == match_indentation and match_block:
+		match_block = false
+	result = regex["match"].search(line)
+	if result and len(current_block) != 0:
+		match_block = true
+		match_indentation = result.get_string("indentation")
+
 	total_lines += 1
 	return line + "\n"
 
@@ -128,7 +147,7 @@ func _regex_factory(pattern):
 
 func _new_block(name, line, indentation):
 	if "start" in current_block:
-			_terminate_current_block()
+		_terminate_current_block()
 	if not name in methods:
 		methods[name] = false
 	current_block = {"visited": false, "start": line_nr, "name": name}
