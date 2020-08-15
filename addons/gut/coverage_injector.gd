@@ -49,7 +49,7 @@ func inject_test_metrics(obj):
 	if "res://" == object_script_path:
 		return
 	
-	regex["func"] = _regex_factory("^func (?<symbol>.*)\\(.*:$")
+	regex["func"] = _regex_factory("^func (?<symbol>.*)\\(.*:?(.*)$")
 	regex["skip"] = _regex_factory("^\\s$")
 	regex["pass"] = _regex_factory("^\\spass$")
 	regex["branch"] = _regex_factory("^(?<indentation>\t*)((el)?if\\t+.*|else):?(\\t*#*)$")
