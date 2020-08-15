@@ -10,12 +10,9 @@ var methods = {}
 var script_injections = {}
 var line_nr = 0
 var skipped_lines = 0
-var total_lines = 0
 var res_key = ""
 var suite : Suite
 var exclude_path = "res://test"
-var match_block = false
-var match_indentation = ""
 var match_block_stack : Array = []
 
 
@@ -139,7 +136,6 @@ func _process_line(line):
 	if result and len(current_block) != 0:
 		match_block_stack.append(result.get_string("indentation"))
 
-	total_lines += 1
 	return line + "\n"
 
 func _terminate_current_block():
