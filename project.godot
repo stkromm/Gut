@@ -15,12 +15,18 @@ _global_script_classes=[ {
 "path": "res://scripts/dummy.gd"
 }, {
 "base": "Node",
+"class": "SimpleDummy",
+"language": "GDScript",
+"path": "res://scripts/simple_dummy.gd"
+}, {
+"base": "Node",
 "class": "TestCoverageMetricsInjector",
 "language": "GDScript",
 "path": "res://addons/gut/coverage_injector.gd"
 } ]
 _global_script_class_icons={
 "Dummy": "res://scripts/dummy.gd",
+"SimpleDummy": "res://scripts/simple_dummy.gd",
 "TestCoverageMetricsInjector": "res://addons/gut/coverage_injector.gd"
 }
 
