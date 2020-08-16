@@ -19,7 +19,6 @@ var match_block_stack : Array = []
 func _ready():
 	suite = Suite.new()
 	suite._ready()
-	add_child(suite)
 	regex["func"] = _regex_factory("^(?<indentation>\t*)func (?<symbol>.*)\\(.*:?(.*)$")
 	regex["skip"] = _regex_factory("^\\s$")
 	regex["pass"] = _regex_factory("^\\spass$")
@@ -163,7 +162,6 @@ func _new_block(name, line, indentation, before = false):
 	return line + "\n" + content
 
 class Suite:
-	extends Node2D
 	var test_data = {}
 	
 	func _ready():
@@ -187,7 +185,6 @@ class Suite:
 
 
 class ReportData:
-	extends Node
 	var blocks = {}
 	var methods = {}
 	
