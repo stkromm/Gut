@@ -135,7 +135,7 @@ func _process_line(line):
 	if result and len(current_block) != 0:
 		match_block_stack.append(result.get_string("indentation"))
 
-	#TODO indentation stack with if/else/elif/match
+	#TODO indentation stack with if/else/elif/match/for/while
 
 	return line + "\n"
 
