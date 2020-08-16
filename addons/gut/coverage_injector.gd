@@ -22,9 +22,9 @@ func _ready():
 	regex["func"] = _regex_factory("^(?<indentation>\t*)func (?<symbol>.*)\\(.*:?(.*)$")
 	regex["skip"] = _regex_factory("^\\s$")
 	regex["pass"] = _regex_factory("^\\spass$")
-	regex["branch"] = _regex_factory("^(?<indentation>\t+)(if.*:|else:|elif:)\\s*(#.*)*$")
+	regex["branch"] = _regex_factory("^(?<indentation>\t+)(if.*:|else:|elif:|while.*:|for.*)\\s*(#.*)*$")
 	regex["match"] = _regex_factory("^(?<indentation>\t*)match[ ].*:.*$")
-	regex["match_condition"] = _regex_factory("^((?!if|else|elif|match|func)(?<indentation>\t+).)*:$")
+	regex["match_condition"] = _regex_factory("^^((?!if|else|elif|match|func|while|for)(?<indentation>\t+).)*:$")
 	regex["indentation"] = _regex_factory("^(?<indentation>\t*)")
 
 func get_test_report():

@@ -43,5 +43,11 @@ func multi_conditional(condition_a, condition_b):
 					print("3-1")
 				2:
 					print("3-2")
+				3:
+					while condition_b == 3:
+						condition_b += 1
+				4:
+					for x in range(0,9):
+						print(x)
 				_:
 					print("3-deff")
