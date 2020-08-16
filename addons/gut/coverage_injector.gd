@@ -20,7 +20,7 @@ func _ready():
 	suite = Suite.new()
 	suite._ready()
 	add_child(suite)
-	regex["func"] = _regex_factory("^func (?<symbol>.*)\\(.*:?(.*)$")
+	regex["func"] = _regex_factory("^(?<indentation>\t*)func (?<symbol>.*)\\(.*:?(.*)$")
 	regex["skip"] = _regex_factory("^\\s$")
 	regex["pass"] = _regex_factory("^\\spass$")
 	regex["branch"] = _regex_factory("^(?<indentation>\t+)(if.*:|else:|elif:)\\s*(#.*)*$")
