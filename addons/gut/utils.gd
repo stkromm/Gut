@@ -68,6 +68,7 @@ static func get_instance():
 
 var Logger = load('res://addons/gut/logger.gd') # everything should use get_logger
 var _lgr = null
+var _coverage_injector : TestCoverageMetricsInjector = null
 
 var _test_mode = false
 var AutoFree = load('res://addons/gut/autofree.gd')
@@ -88,7 +89,8 @@ var Summary = load('res://addons/gut/summary.gd')
 var Test = load('res://addons/gut/test.gd')
 var TestCollector = load('res://addons/gut/test_collector.gd')
 var ThingCounter = load('res://addons/gut/thing_counter.gd')
-var injector : TestCoverageMetricsInjector = load('res://addons/gut/coverage_injector.gd').new()
+var _TestCoverageMetricsInjector = load('res://addons/gut/coverage_injector.gd')
+
 
 # Source of truth for the GUT version
 var version = '7.0.0'
@@ -150,6 +152,17 @@ func get_logger():
 			_lgr = Logger.new()
 		return _lgr
 
+
+# ------------------------------------------------------------------------------
+# Everything should get a injector through this.
+#
+# ------------------------------------------------------------------------------
+
+func get_coverage_injector():
+	if(_coverage_injector == null):
+		_coverage_injector = _TestCoverageMetricsInjector.new()
+		_coverage_injector._ready()
+	return _coverage_injector
 
 # ------------------------------------------------------------------------------
 # Returns an array created by splitting the string by the delimiter

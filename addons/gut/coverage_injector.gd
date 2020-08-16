@@ -136,6 +136,8 @@ func _process_line(line):
 	if result and len(current_block) != 0:
 		match_block_stack.append(result.get_string("indentation"))
 
+	#TODO indentation stack with if/else/elif/match
+
 	return line + "\n"
 
 func _terminate_current_block():
@@ -160,3 +162,56 @@ func _new_block(name, line, indentation, before = false):
 		return content + "\n" + line
 	return line + "\n" + content
 
+class Suite:
+	extends Node2D
+	var test_data = {}
+	
+	func _ready():
+		pass 
+	
+	func register_new_script(key, data):
+		test_data[key] = data
+	
+	func on_visit(name, line_nr, res_path):
+		test_data[res_path].blocks[line_nr].visited = true
+		test_data[res_path].methods[name] = true
+		
+	func get_test_data():
+		return test_data
+		
+	func generate_report():
+		var report = {}
+		for key in test_data:
+			report[key] = test_data[key].generate_report()
+		return report
+
+
+class ReportData:
+	extends Node
+	var blocks = {}
+	var methods = {}
+	
+	func generate_report() -> Dictionary:
+		var lines_covered = 0
+		var lines_total = 0
+		var visited_methods = 0
+		var uncovered_lines = []
+		for key in blocks:
+			if blocks[key].visited:
+				lines_covered += blocks[key].end - blocks[key].start
+			else:
+				for line_number in range(blocks[key].start, blocks[key].end + 1):
+					uncovered_lines.append(line_number)
+			lines_total += blocks[key].end - blocks[key].start
+		for key in methods:
+			if methods[key]:
+				visited_methods += 1
+		
+		if lines_total == 0:
+			return {"missing":"missing"}
+		
+		return {
+			"line_coverage" : str(lines_covered / float(lines_total) * 100) + "%",
+			"method_coverage": str(visited_methods / float(len(methods)) * 100) + "%",
+			"uncovered_lines": str(uncovered_lines)
+		}

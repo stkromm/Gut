@@ -223,8 +223,7 @@ func _setup_gut():
 	_gut.get_gui().rect_size =  rect_size
 	
 	if(_test_coverage):
-		_utils.injector._ready()
-		get_tree().connect("node_added", _utils.injector, "inject_test_metrics")
+		get_tree().connect("node_added", _gut._utils.get_coverage_injector(), "inject_test_metrics")
 		_gut.connect("tests_finished", self, "log_report")
 	
 	emit_signal('gut_ready')
@@ -236,7 +235,7 @@ func _setup_gut():
 		_gut.test_scripts(run_rest_of_scripts)
 
 func log_report():
-	_lgr.info(str(_gut._utils.injector.get_test_report()))
+	_lgr.info(str(_gut._utils.get_coverage_injector().get_test_report()))
 
 func _is_ready_to_go(action):
 	if(_gut == null):
