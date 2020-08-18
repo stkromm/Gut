@@ -157,7 +157,7 @@ func _new_block(name, line, indentation, before = false):
 		_terminate_current_block()
 	if not name in methods:
 		methods[name] = false
-	current_block = {"visited": false, "start": line_nr, "name": name, "visit_count": 0}
+	current_block = {"visited": false, "start": line_nr, "name": name, "visit_count": 0, "indentation": len(indentation)}
 	blocks[line_nr] = current_block
 	var content = indentation + "emit_signal(\"visited\", \"" + name + "\", " + str(line_nr) + ",\"" + res_key + "\")"
 	if before:
