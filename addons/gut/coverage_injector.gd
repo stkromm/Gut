@@ -113,8 +113,6 @@ func _process_line(line):
 		line = _new_block(name, line, "\t")
 		return line + "\n"
 		
-	
-	
 	result = regex["match_condition"].search(line)
 	if result and len(current_block) != 0:
 		var content = ""
@@ -152,12 +150,28 @@ func _regex_factory(pattern):
 	regex.compile(pattern)
 	return regex
 
+func _reverse_search(indentation) -> Dictionary:
+	var result = []
+	for x in range(len(blocks) -1,  0, -1): #todo reverse search
+		var block = blocks[blocks.keys()[x]]
+		if block.indentation <= len(indentation):
+			return result
+		else:
+			result.append(block)
+	return result
+
 func _new_block(name, line, indentation, before = false):
+	var children = []
+	if before:
+		for b in _reverse_search(indentation):
+			children.append(b.start)
 	if "start" in current_block:
 		_terminate_current_block()
 	if not name in methods:
 		methods[name] = false
 	current_block = {"visited": false, "start": line_nr, "name": name, "visit_count": 0, "indentation": len(indentation)}
+	if before:
+		current_block.children = children
 	blocks[line_nr] = current_block
 	var content = indentation + "emit_signal(\"visited\", \"" + name + "\", " + str(line_nr) + ",\"" + res_key + "\")"
 	if before:
