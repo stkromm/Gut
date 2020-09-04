@@ -4,30 +4,32 @@ class_name TestCoverageMetricsInjector, "res://addons/gut/coverage_injector.gd"
 
 var regex = {}
 
-var blocks = {}
+var blocks = []
 var current_block = {}
 var methods = {}
 var script_injections = {}
 var line_nr = 0
 var skipped_lines = 0
 var res_key = ""
-var suite : Suite
 var exclude_path = "res://test"
 var match_block_stack : Array = []
+var index = 1
 
+## MAKE SURE THERE IS WHITESPACE BETWEEN AND AFTER FUNCTIONS
+## REGEX SPLIT BLOCKS [\s\S]*?[\r\n]{2}
+## LOOP LINES, RECURSIVE, IF INDENTATION IS SAME, COLLECT, LOWER RETURN HIGHER RETURN D+1
 
 func _ready():
-	suite = Suite.new()
-	suite._ready()
 	regex["func"] = _regex_factory("^(?<indentation>\t*)func (?<symbol>.*)\\(.*:?(.*)$")
 	regex["skip"] = _regex_factory("^\\s$")
 	regex["pass"] = _regex_factory("^\\spass$")
 	regex["branch"] = _regex_factory("^(?<indentation>\t+)((?<conditional>if|else|elif|while|for|match).*:)\\s*(#.*)*$")
 	regex["match_condition"] = _regex_factory("^((?!if|else|elif|match|func|while|for)(?<indentation>\t+)\"*.)*\"*:$")
 	regex["indentation"] = _regex_factory("^(?<indentation>\t*)")
+	regex["line"] = _regex_factory("^(?<indentation>\t*)(?<other>.*)")
 
 func get_test_report():
-	return suite.generate_report()
+	return {}
 
 func get_object_script(obj):
 	if obj is Reference:
@@ -55,9 +57,6 @@ func inject_test_metrics(obj):
 	if "res://" == object_script_path:
 		return
 
-	obj.add_user_signal("visited")
-	obj.connect("visited", suite, "on_visit")
-
 	var script = fetch_script(obj)
 
 	if len(blocks) == 0:
@@ -78,153 +77,62 @@ func fetch_script(obj):
 
 func generate_script(obj):
 	methods = {}
-	blocks = {}
 	match_block_stack = []
 	var script : Script = GDScript.new()
 	var line = ""
+	var lines = {}
 	var source = ""
+	var nr = 1
 	for c in obj.get_script().get_source_code():
 		if c != '\n':
 			line += c
 		else:
-			source += _process_line(line)
+			source += line + "\n"
+			lines[nr] = line
+			nr += 1
 			line = ""
-	while len(match_block_stack) != 0:
-		source += _new_block(current_block["name"], "", match_block_stack.back(), true)
-		match_block_stack.pop_back()
-	if "start" in current_block:
-		_terminate_current_block()
+	source += line + "\n"
+	lines[nr] = line
+	nr += 1
+	line = ""
+	_generate_tree(lines)
 	
-	print(source)
 	script.set_source_code(source)
 	script.reload()
-	var t_data = ReportData.new()
-	t_data.methods = methods
-	t_data.blocks = blocks
-	suite.register_new_script(res_key, t_data)
 	return script
-
-func _process_line(line):
-	line_nr += 1
-	
-	var result = regex["func"].search(line)
-	if result:
-		var name = result.get_string("symbol")
-		line = _new_block(name, line, "\t")
-		return line + "\n"
-		
-	result = regex["match_condition"].search(line)
-	if result and len(current_block) != 0:
-		var content = ""
-		while len(result.get_string("indentation")) <= len(match_block_stack.back()):
-			content = _new_block(current_block["name"], content, match_block_stack.back()) + "\n"
-			match_block_stack.pop_back()
-		line = content + line
-		line = _new_block(current_block["name"], line, result.get_string("indentation") + "\t")
-		return line + "\n"
-	
-	result = regex["branch"].search(line)
-	if result and len(current_block) != 0:
-		var condition = result.get_string("conditional")
-		if condition == "if" || condition == "for" || condition == "while" || condition == "match":
-			match_block_stack.append(result.get_string("indentation"))
-		if condition == "if" || condition == "for" || condition == "while" || condition == "else":
-			line = _new_block(current_block["name"], line, result.get_string("indentation") + "\t")
-		return line + "\n"
-	
-	
-	result = regex["indentation"].search(line)
-	if len(match_block_stack) > 0 and len(result.get_string("indentation")) <= len(match_block_stack.back()):
-		line = _new_block(current_block["name"], line, match_block_stack.back(), true)
-		match_block_stack.pop_back()
-	
-	return line + "\n"
-
-func _terminate_current_block():
-	blocks[current_block["start"]].end = line_nr
-	skipped_lines = 0
-	current_block = {}
 
 func _regex_factory(pattern):
 	var regex = RegEx.new()
 	regex.compile(pattern)
 	return regex
 
-func _reverse_search(indentation) -> Dictionary:
+func indentation(line) -> int:
+	var result = regex["indentation"].search(line)
+	if result:
+		return len(result.get_string("indentation"))
+	return 0
+	
+func _generate_tree(lines):
+	index = 1
+	while index <= len(lines):
+		var current_line = lines[index]
+		var result = regex["func"].search(current_line)
+		if result:
+			blocks.append({"lines": [], "method_name": result.get_string("symbol")})
+			index += 1
+			blocks.back().lines = _gather_lines(lines, indentation(lines[index]))
+		index += 1
+	print(blocks)
+
+func _gather_lines(lines, indentation):
 	var result = []
-	for x in range(len(blocks) -1,  0, -1): #todo reverse search
-		var block = blocks[blocks.keys()[x]]
-		if block.indentation <= len(indentation):
+	while index <= len(lines):
+		var current_line = lines[index]
+		if indentation(current_line) == indentation:
+			result.append({"line": current_line, "line_nr": index})
+			index += 1
+		if indentation(current_line) > indentation:
+			result.back().children = _gather_lines(lines, indentation + 1)
+		if indentation(current_line) < indentation:
 			return result
-		else:
-			result.append(block)
 	return result
-
-func _new_block(name, line, indentation, before = false):
-	var children = []
-	if before:
-		for b in _reverse_search(indentation):
-			children.append(b.start)
-	if "start" in current_block:
-		_terminate_current_block()
-	if not name in methods:
-		methods[name] = false
-	current_block = {"visited": false, "start": line_nr, "name": name, "visit_count": 0, "indentation": len(indentation)}
-	if before:
-		current_block.children = children
-	blocks[line_nr] = current_block
-	var content = indentation + "emit_signal(\"visited\", \"" + name + "\", " + str(line_nr) + ",\"" + res_key + "\")"
-	if before:
-		return content + "\n" + line
-	return line + "\n" + content
-
-class Suite:
-	extends Reference
-	var test_data = {}
-	
-	func _ready():
-		pass 
-	
-	func register_new_script(key, data):
-		test_data[key] = data
-	
-	func on_visit(name, line_nr, res_path):
-		test_data[res_path].blocks[line_nr].visit_count += 1
-		test_data[res_path].blocks[line_nr].visited = true
-		test_data[res_path].methods[name] = true
-		
-	func get_test_data():
-		return test_data
-		
-	func generate_report():
-		var report = {}
-		for key in test_data:
-			report[key] = test_data[key].generate_report()
-		return report
-
-
-class ReportData:
-	extends Reference
-	var blocks = {}
-	var methods = {}
-	
-	func generate_report() -> Dictionary:
-		var lines_covered = 0
-		var lines_total = 0
-		var visited_methods = 0
-		var uncovered_lines = []
-		for key in blocks:
-			if blocks[key].visited:
-				lines_covered += blocks[key].end - blocks[key].start
-			else:
-				for line_number in range(blocks[key].start, blocks[key].end + 1):
-					uncovered_lines.append(line_number)
-			lines_total += blocks[key].end - blocks[key].start
-		for key in methods:
-			if methods[key]:
-				visited_methods += 1
-		
-		if lines_total == 0:
-			return {"missing":"missing"}
-		
-		return blocks

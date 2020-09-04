@@ -1,5 +1,7 @@
 extends Node
 
+
+
 class_name Dummy, "res://scripts/dummy.gd"
 	
 func conditional(condition):
