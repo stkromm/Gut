@@ -161,7 +161,6 @@ func get_logger():
 func get_coverage_injector():
 	if(_coverage_injector == null):
 		_coverage_injector = _TestCoverageMetricsInjector.new()
-		_coverage_injector._ready()
 	return _coverage_injector
 
 # ------------------------------------------------------------------------------
