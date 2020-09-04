@@ -63,6 +63,7 @@ func generate_script(obj):
 class TreeConsumer:
 	func print_dot(blocks):
 		#TODO generate unique names for nodes
+		#TODO gather blocks if possible
 		print("digraph G {")
 		for block in blocks:
 			_traverse_tree(block, block["method_name"])

@@ -3,7 +3,14 @@ extends Node
 
 
 class_name Dummy, "res://scripts/dummy.gd"
-	
+
+func block():
+	print("No control flow 1")
+	print("No control flow 2")
+	print("No control flow 3")
+	print("No control flow 4")
+	print("No control flow 5")
+
 func conditional(condition):
 	if condition:
 		print("Hello")
