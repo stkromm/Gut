@@ -54,7 +54,7 @@ func generate_script(obj):
 	var generator = TreeGenerator.new()
 	var blocks = generator.generate_tree(obj)
 	var consumer = TreeConsumer.new()
-	consumer.print_dot(blocks)
+	consumer.print_dot(blocks["blocks"])
 	consumer.print_source(blocks)
 	
 	script.set_source_code(obj.get_script().get_source_code())
@@ -81,8 +81,11 @@ class TreeConsumer:
 				_traverse_dot(line, id)
 	
 	func print_source(blocks):
-		for block in blocks:
-			print(block["method_name"] + "():")
+		for line in blocks["header"]:
+			print(line)
+		
+		for block in blocks["blocks"]:
+			print(block["line"])
 			_print_source(block)
 			print()
 	
@@ -94,7 +97,8 @@ class TreeConsumer:
 				
 
 
-class TreeGenerator: #TODO get method signature
+class TreeGenerator:
+	#TODO connect if/else
 	var regex = {}
 	var index = 1
 	var blocks = []
@@ -115,11 +119,18 @@ class TreeGenerator: #TODO get method signature
 			var current_line = lines[index]
 			var result = regex["func"].search(current_line)
 			if result:
-				blocks.append({"lines": [], "method_name": result.get_string("symbol")})
+				blocks.append({"lines": [], "method_name": result.get_string("symbol"), "line": current_line})
 				index += 1
 				blocks.back().lines = _gather_lines(lines, _indentation(lines[index]))
 			index += 1
-		return blocks
+		
+		var header = []
+		if len(blocks) > 0:
+			var end = blocks.front().lines.front()["line_nr"] - 1
+			for x in range(1, end):
+				header.append(lines[x])
+		
+		return {"blocks": blocks, "header": header}
 	
 	func _gather_lines(lines, indentation):
 		var result = []
