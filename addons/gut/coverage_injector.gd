@@ -81,6 +81,12 @@ class TreeConsumer:
 				_traverse_dot(line, id)
 	
 	func print_source(blocks):
+		#IF current line is IF/Match/For/While -> Create new metadata
+		#IF current line is match condition, else, elif -> Connect to previous metadata
+		#At start of method -> Create new metadata
+		#After any control flow -> Create new metadata
+		#If line is empty, mark line as skip line
+		#At metadata terminate, add all previous lines to metadata
 		for line in blocks["header"]:
 			print(line)
 		
