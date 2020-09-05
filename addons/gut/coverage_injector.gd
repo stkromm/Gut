@@ -65,8 +65,6 @@ class TreeConsumer:
 	var node_counter = 0
 	
 	func print_dot(blocks):
-		#TODO generate unique names for nodes
-		#TODO gather blocks if possible
 		print("digraph G {")
 		for block in blocks:
 			_traverse_tree(block, block["method_name"])
