@@ -55,6 +55,7 @@ func generate_script(obj):
 	var blocks = generator.generate_tree(obj)
 	var consumer = TreeConsumer.new()
 	consumer.print_dot(blocks)
+	consumer.print_source(blocks)
 	
 	script.set_source_code(obj.get_script().get_source_code())
 	script.reload()
@@ -78,8 +79,22 @@ class TreeConsumer:
 			print(name + " -> " + str(id))
 			if "lines" in line and len(line["lines"]) != 0:
 				_traverse_dot(line, id)
+	
+	func print_source(blocks):
+		for block in blocks:
+			print(block["method_name"] + "():")
+			_print_source(block)
+			print()
+	
+	func _print_source(block):
+		for line in block["lines"]:
+			print(line["line"])
+			if "lines" in line and len(line["lines"]) != 0:
+				_print_source(line)
+				
 
-class TreeGenerator:
+
+class TreeGenerator: #TODO get method signature
 	var regex = {}
 	var index = 1
 	var blocks = []
