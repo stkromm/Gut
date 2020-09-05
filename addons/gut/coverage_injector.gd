@@ -67,26 +67,17 @@ class TreeConsumer:
 	func print_dot(blocks):
 		print("digraph G {")
 		for block in blocks:
-			_traverse_tree(block, block["method_name"])
+			_traverse_dot(block, block["method_name"])
 		print("}")
 		
-	func _traverse_tree(block, name):
+	func _traverse_dot(block, name):
 		for line in block["lines"]:
-			var id = str(node_counter)
-			node_counter += 1
-			print(str(id) + " [label=\"" + line["line"].replace("\"", "\\\"")  + "\"];");
-			print(name + " -> " + str(id))
-			if "children" in line and len(line["children"]) != 0:
-				_traverse(line, id)
-		
-	func _traverse(block, name):
-		for line in block["children"]:
 			var id = str(node_counter)
 			node_counter += 1
 			print(str(id) + " [label=\"" + line["line"].strip_edges().replace("\"", "\\\"")  + "\"];");
 			print(name + " -> " + str(id))
-			if "children" in line and len(line["children"]) != 0:
-				_traverse(line, id)
+			if "lines" in line and len(line["lines"]) != 0:
+				_traverse_dot(line, id)
 
 class TreeGenerator:
 	var regex = {}
@@ -123,7 +114,7 @@ class TreeGenerator:
 				result.append({"line": current_line, "line_nr": index})
 				index += 1
 			if _indentation(current_line) > indentation:
-				result.back().children = _gather_lines(lines, indentation + 1)
+				result.back().lines = _gather_lines(lines, indentation + 1)
 			if _indentation(current_line) < indentation:
 				return result
 		return result
