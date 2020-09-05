@@ -61,6 +61,9 @@ func generate_script(obj):
 	return script
 
 class TreeConsumer:
+	
+	var node_counter = 0
+	
 	func print_dot(blocks):
 		#TODO generate unique names for nodes
 		#TODO gather blocks if possible
@@ -71,15 +74,21 @@ class TreeConsumer:
 		
 	func _traverse_tree(block, name):
 		for line in block["lines"]:
-			print("\"" + name.replace("\"", "\\\"")  + "\"" + "->" + "\"" + line["line"].replace("\"", "\\\"").strip_edges() + "\"")
+			var id = str(node_counter)
+			node_counter += 1
+			print(str(id) + " [label=\"" + line["line"].replace("\"", "\\\"")  + "\"];");
+			print(name + " -> " + str(id))
 			if "children" in line and len(line["children"]) != 0:
-				_traverse(line, line["line"].strip_edges())
+				_traverse(line, id)
 		
 	func _traverse(block, name):
 		for line in block["children"]:
-			print("\"" + name.replace("\"", "\\\"")  + "\"" + "->" + "\"" + line["line"].replace("\"", "\\\"").strip_edges() + "\"")
+			var id = str(node_counter)
+			node_counter += 1
+			print(str(id) + " [label=\"" + line["line"].strip_edges().replace("\"", "\\\"")  + "\"];");
+			print(name + " -> " + str(id))
 			if "children" in line and len(line["children"]) != 0:
-				_traverse(line, line["line"].strip_edges())
+				_traverse(line, id)
 
 class TreeGenerator:
 	var regex = {}
