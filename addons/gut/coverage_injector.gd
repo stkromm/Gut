@@ -64,6 +64,7 @@ func generate_script(obj):
 class TreeConsumer:
 	
 	var node_counter = 0
+	var testSuite = TestSuite.new()
 	
 	func print_dot(blocks):
 		print("digraph G {")
@@ -92,19 +93,46 @@ class TreeConsumer:
 		
 		for block in blocks["blocks"]:
 			print(block["line"])
+			testSuite.new_test_data(block["lines"].front()["line_nr"])
 			_print_source(block)
 			print()
 	
+		print(testSuite.test_data)
+	
 	func _print_source(block):
 		for line in block["lines"]:
+			testSuite.add_line(line["line_nr"])
 			print(line["line"])
 			if "lines" in line and len(line["lines"]) != 0:
+				testSuite.new_test_data(block["lines"].front()["line_nr"])
 				_print_source(line)
 				
 
 
+class TestSuite:
+	
+	var test_data = {}
+	var block_counter = 0
+	
+	#TODO blocks have the correct lines
+	#TODO control flows connect to correct previous blocks
+	#TODO signals are generated
+	
+	func new_test_data(index) -> String:
+		test_data[block_counter] = {"line_nrs": []}
+		block_counter += 1
+		return _generate_signal_string()
+		
+	func add_line(index) -> void:
+		test_data[block_counter - 1].line_nrs.append(index)
+		
+	func connect_to_previous(lines, index) -> String:
+		return _generate_signal_string()
+		
+	func _generate_signal_string() -> String:
+		return ""
+
 class TreeGenerator:
-	#TODO connect if/else
 	var regex = {}
 	var index = 1
 	var blocks = []
